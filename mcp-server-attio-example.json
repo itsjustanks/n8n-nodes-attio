@@ -1,0 +1,89 @@
+{
+  "name": "MCP Server - Attio CRM Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "bearerAuth",
+        "path": "attio-crm"
+      },
+      "id": "mcp-trigger",
+      "name": "MCP Server Trigger",
+      "type": "n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "mcp-attio-server"
+    },
+    {
+      "parameters": {
+        "name": "Search Attio Records",
+        "description": "Search for records in Attio CRM with optional filters",
+        "workflowId": "={{ $('Execute Workflow Trigger').id }}",
+        "fields": {
+          "values": [
+            {
+              "name": "object",
+              "type": "string",
+              "description": "The object type to search (e.g., 'people', 'companies')",
+              "defaultValue": "people"
+            },
+            {
+              "name": "filter",
+              "type": "json",
+              "description": "JSON filter object for searching",
+              "defaultValue": "{}"
+            },
+            {
+              "name": "limit",
+              "type": "number",
+              "description": "Maximum number of results to return",
+              "defaultValue": 50
+            }
+          ]
+        }
+      },
+      "id": "search-tool",
+      "name": "Search Records Tool",
+      "type": "n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1,
+      "position": [450, 200]
+    },
+    {
+      "parameters": {
+        "name": "Create Attio Record",
+        "description": "Create a new record in Attio CRM",
+        "workflowId": "={{ $('Execute Workflow Trigger').id }}",
+        "fields": {
+          "values": [
+            {
+              "name": "object",
+              "type": "string",
+              "description": "The object type to create (e.g., 'people', 'companies')",
+              "defaultValue": "people"
+            },
+            {
+              "name": "data",
+              "type": "json",
+              "description": "JSON data for the new record",
+              "defaultValue": "{\"values\": {}}"
+            }
+          ]
+        }
+      },
+      "id": "create-tool",
+      "name": "Create Record Tool",
+      "type": "n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1,
+      "position": [450, 400]
+    }
+  ],
+  "connections": {
+    "MCP Server Trigger": {
+      "main": [
+        [
+          {"node": "Search Records Tool", "type": "main", "index": 0},
+          {"node": "Create Record Tool", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "name": "Attio MCP Tool - Search Records",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "resource": "Records",
+        "operation": "POST -v2-objects--object--records-query",
+        "object": "={{ $json.object || 'people' }}",
+        "filter": "={{ $json.filter || '{}' }}",
+        "sorts": "={{ $json.sorts || '[]' }}",
+        "limit": "={{ $json.limit || 50 }}",
+        "offset": "={{ $json.offset || 0 }}"
+      },
+      "id": "attio",
+      "name": "Attio",
+      "type": "n8n-nodes-attio.attio",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "attioApi": {
+          "id": "attio-creds",
+          "name": "Attio API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "tool_name",
+              "value": "search_attio_records"
+            },
+            {
+              "name": "description",
+              "value": "Search Attio CRM records with filters"
+            }
+          ]
+        }
+      },
+      "id": "metadata",
+      "name": "Tool Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [[{"node": "Attio", "type": "main", "index": 0}]]
+    },
+    "Attio": {
+      "main": [[{"node": "Tool Metadata", "type": "main", "index": 0}]]
+    }
+  }
+}

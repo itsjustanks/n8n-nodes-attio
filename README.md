@@ -33,11 +33,22 @@ To use this node, you'll need an Attio API access token:
 3. Create a new API token
 4. Copy the token and add it to the Attio credentials in n8n
 
+## MCP (Model Context Protocol) Integration
+
+This node is compatible with n8n's MCP Server, allowing AI agents and MCP clients to interact with Attio CRM:
+
+- **AI Agent Tool**: Use Attio operations directly in AI agent workflows
+- **MCP Server**: Expose Attio workflows to external MCP clients like Claude Desktop
+- **Intelligent CRM**: Build AI-powered workflows that can query and update customer data
+
+See the [MCP Integration Guide](MCP_INTEGRATION_GUIDE.md) for detailed setup instructions and examples.
+
 ## Resources
 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
 - [Attio API documentation](https://docs.attio.com/rest-api)
 - [Attio OpenAPI specification](https://api.attio.com/openapi.json)
+- [MCP Integration Guide](MCP_INTEGRATION_GUIDE.md)
 
 ## Credits
 
