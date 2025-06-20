@@ -153,8 +153,11 @@ export class Attio implements INodeType {
 										requestOptions.body[property] = processedValue;
 										break;
 									case 'query':
-										if (!requestOptions.qs) requestOptions.qs = {};
-										requestOptions.qs[property] = processedValue;
+										// Only add query parameters if they have actual values
+										if (processedValue !== undefined && processedValue !== null && processedValue !== '') {
+											if (!requestOptions.qs) requestOptions.qs = {};
+											requestOptions.qs[property] = processedValue;
+										}
 										break;
 								}
 							}
@@ -187,6 +190,11 @@ export class Attio implements INodeType {
 				}
 
 				requestOptions.url = finalUrl;
+
+				// Clean up empty query string object to prevent trailing =
+				if (requestOptions.qs && Object.keys(requestOptions.qs).length === 0) {
+					delete requestOptions.qs;
+				}
 
 				// Make the API request
 				const response = await this.helpers.request(requestOptions);
