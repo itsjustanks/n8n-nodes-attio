@@ -1,47 +1,48 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n-nodes-attio
 
-# n8n-nodes-starter
+This is an n8n community node that allows you to integrate [Attio](https://attio.com) CRM with your n8n workflows.
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](https://n8n.io). It includes the node linter and other dependencies.
+[Attio](https://attio.com) is a modern CRM built for the future of work, offering powerful data models, flexible workflows, and real-time collaboration features.
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+## Installation
 
-If you would like your node to be available on n8n cloud you can also [submit your node for verification](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/).
+Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
 
-## Prerequisites
+## Operations
 
-You need the following installed on your development machine:
+This node supports all Attio API operations as defined in their [OpenAPI specification](https://api.attio.com/openapi.json), including:
 
-* [git](https://git-scm.com/downloads)
-* Node.js and npm. Minimum version Node 20. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  npm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
+- **Objects**: List, Create, Get, Update objects
+- **Records**: List, Create, Get, Update, Delete records  
+- **Attributes**: List, Create, Get, Update attributes
+- **Lists**: List, Create, Get, Update lists
+- **Entries**: List, Create, Get, Update, Delete list entries
+- **Notes**: Create, Get, Update notes
+- **Tasks**: List, Create, Get, Update tasks
+- **Comments**: List, Create comments on threads
+- **Workspace Members**: List workspace members
+- **Webhooks**: Create and manage webhooks
+- And more...
 
-## Using this starter
+## Credentials
 
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
+To use this node, you'll need an Attio API access token:
 
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
-   ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
-   ```
-3. Run `npm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `npm run lint` to check for errors or `npm run lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+1. Log in to your [Attio account](https://app.attio.com)
+2. Go to Workspace Settings → Developer → API
+3. Create a new API token
+4. Copy the token and add it to the Attio credentials in n8n
 
-## More information
+## Resources
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+- [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
+- [Attio API documentation](https://docs.attio.com/rest-api)
+- [Attio OpenAPI specification](https://api.attio.com/openapi.json)
+
+## Credits
+
+- **Created by**: [@itsjustanks](https://x.com/itsjustanks) | [ankit.com.au](https://ankit.com.au)
+- **OpenAPI Integration**: Built using [@devlikeapro/n8n-openapi-node](https://www.npmjs.com/package/@devlikeapro/n8n-openapi-node) - Special thanks to the n8n-openapi-node project for making it easy to convert OpenAPI specs to n8n nodes
 
 ## License
 
