@@ -72,7 +72,6 @@ export class Attio implements INodeType {
 				Accept: 'application/json',
 				'Content-Type': 'application/json',
 			},
-			baseURL: 'https://api.attio.com',
 		},
 		properties: fixedProperties, // Use the fixed properties
 	};
@@ -158,15 +157,36 @@ export class Attio implements INodeType {
 										requestOptions.qs[property] = processedValue;
 										break;
 								}
-							} else {
-								// If no routing info, assume it's a path parameter
-								requestOptions.url = requestOptions.url.replace(`{{$parameter["${propAny.name}"]}}`, value);
 							}
 						}
 					} catch (error) {
 						// Parameter is optional and not set
 					}
 				}
+
+				// Replace path parameters in URL (handle {param} format)
+				let finalUrl = requestOptions.url;
+				const pathParamMatches = finalUrl.match(/\{([^}]+)\}/g);
+				if (pathParamMatches) {
+					for (const match of pathParamMatches) {
+						const paramName = match.replace(/[{}]/g, '');
+						try {
+							const paramValue = this.getNodeParameter(paramName, i);
+							if (paramValue !== undefined && paramValue !== null) {
+								finalUrl = finalUrl.replace(match, String(paramValue));
+							}
+						} catch (error) {
+							// Parameter might not exist or is optional
+						}
+					}
+				}
+
+				// Ensure the URL is absolute
+				if (!finalUrl.startsWith('http')) {
+					finalUrl = 'https://api.attio.com' + finalUrl;
+				}
+
+				requestOptions.url = finalUrl;
 
 				// Make the API request
 				const response = await this.helpers.request(requestOptions);
