@@ -16,6 +16,37 @@ const config: N8NPropertiesBuilderConfig = {};
 const parser = new N8NPropertiesBuilder(doc, config);
 const properties = parser.build();
 
+// Fix the displayOptions issue: map operation names to values
+const operationMapping: { [key: string]: string } = {};
+
+// Build the mapping by finding all operation properties
+properties.forEach((prop: any) => {
+	if (prop.name === 'operation' && prop.options) {
+		prop.options.forEach((opt: any) => {
+			operationMapping[opt.name] = opt.value;
+		});
+	}
+});
+
+// Fix displayOptions in all properties to use operation values instead of names
+const fixedProperties = properties.map((prop: any) => {
+	if (prop.displayOptions?.show?.operation) {
+		return {
+			...prop,
+			displayOptions: {
+				...prop.displayOptions,
+				show: {
+					...prop.displayOptions.show,
+					operation: prop.displayOptions.show.operation.map((opName: string) =>
+						operationMapping[opName] || opName
+					),
+				},
+			},
+		};
+	}
+	return prop;
+});
+
 export class Attio implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Attio',
@@ -43,7 +74,7 @@ export class Attio implements INodeType {
 			},
 			baseURL: 'https://api.attio.com',
 		},
-		properties: properties, // Properties generated from OpenAPI spec
+		properties: fixedProperties, // Use the fixed properties
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
