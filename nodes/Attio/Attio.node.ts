@@ -1,7 +1,10 @@
 import {
+	IExecuteFunctions,
+	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 	NodeConnectionType,
+	NodeOperationError,
 } from 'n8n-workflow';
 import {
 	N8NPropertiesBuilder,
@@ -42,4 +45,120 @@ export class Attio implements INodeType {
 		},
 		properties: properties, // Properties generated from OpenAPI spec
 	};
+
+	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		const items = this.getInputData();
+		const returnData: INodeExecutionData[] = [];
+		const credentials = await this.getCredentials('attioApi');
+
+		for (let i = 0; i < items.length; i++) {
+			try {
+				const resource = this.getNodeParameter('resource', i) as string;
+				const operation = this.getNodeParameter('operation', i) as string;
+
+				// Find the operation configuration
+				const operationProperty: any = properties.find(
+					(prop: any) => prop.name === 'operation' &&
+					prop.displayOptions?.show?.resource?.[0] === resource &&
+					prop.options?.find((opt: any) => opt.value === operation)
+				);
+
+				if (!operationProperty || !operationProperty.options) {
+					throw new NodeOperationError(this.getNode(), `Operation ${operation} not found for resource ${resource}`);
+				}
+
+				const operationConfig = operationProperty.options.find((opt: any) => opt.value === operation);
+				if (!operationConfig || !operationConfig.routing?.request) {
+					throw new NodeOperationError(this.getNode(), `Operation configuration not found for ${operation}`);
+				}
+
+				const { method, url } = operationConfig.routing.request;
+
+				// Build the request
+				const requestOptions: any = {
+					method,
+					url,
+					headers: {
+						'Authorization': `Bearer ${credentials.accessToken}`,
+						'Accept': 'application/json',
+						'Content-Type': 'application/json',
+					},
+					json: true,
+				};
+
+				// Process parameters based on their routing configuration
+				const allProperties = properties.filter((prop: any) => {
+					return prop.displayOptions?.show?.operation?.[0] === operation &&
+						prop.displayOptions?.show?.resource?.[0] === resource;
+				});
+
+				for (const prop of allProperties) {
+					const propAny = prop as any;
+					if (propAny.name === 'operation' || propAny.type === 'notice') continue;
+
+					try {
+						const value = this.getNodeParameter(propAny.name, i, propAny.default);
+
+						if (value !== undefined && value !== null && value !== '') {
+							// Handle routing based on property configuration
+							if (propAny.routing?.send) {
+								const { type, property, value: valueExpression } = propAny.routing.send;
+
+								// Evaluate the value expression if present
+								let processedValue = value;
+								if (valueExpression && typeof value === 'string') {
+									try {
+										// For JSON fields, parse them
+										if (propAny.type === 'json') {
+											processedValue = JSON.parse(value);
+										}
+									} catch (e) {
+										// If parsing fails, use the raw value
+									}
+								}
+
+								switch (type) {
+									case 'body':
+										if (!requestOptions.body) requestOptions.body = {};
+										requestOptions.body[property] = processedValue;
+										break;
+									case 'query':
+										if (!requestOptions.qs) requestOptions.qs = {};
+										requestOptions.qs[property] = processedValue;
+										break;
+								}
+							} else {
+								// If no routing info, assume it's a path parameter
+								requestOptions.url = requestOptions.url.replace(`{{$parameter["${propAny.name}"]}}`, value);
+							}
+						}
+					} catch (error) {
+						// Parameter is optional and not set
+					}
+				}
+
+				// Make the API request
+				const response = await this.helpers.request(requestOptions);
+
+				returnData.push({
+					json: response,
+					pairedItem: { item: i },
+				});
+
+			} catch (error) {
+				if (this.continueOnFail()) {
+					returnData.push({
+						json: {
+							error: error.message,
+						},
+						pairedItem: { item: i },
+					});
+					continue;
+				}
+				throw error;
+			}
+		}
+
+		return [returnData];
+	}
 }
