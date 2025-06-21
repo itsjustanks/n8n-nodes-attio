@@ -16,20 +16,175 @@ const config: N8NPropertiesBuilderConfig = {};
 const parser = new N8NPropertiesBuilder(doc, config);
 const properties = parser.build();
 
-// Fix the displayOptions issue: map operation names to values
-const operationMapping: { [key: string]: string } = {};
+// Function to convert operation names to user-friendly names
+function makeOperationNameFriendly(name: string): string {
+	// First, extract the meaningful parts
+	const match = name.match(/^(GET|POST|PUT|PATCH|DELETE)\s+(.+)$/);
+	if (!match) return name;
 
-// Build the mapping by finding all operation properties
-properties.forEach((prop: any) => {
-	if (prop.name === 'operation' && prop.options) {
-		prop.options.forEach((opt: any) => {
-			operationMapping[opt.name] = opt.value;
-		});
+	const [, method, path] = match;
+
+	// Common patterns
+	const patterns: Array<[RegExp, (() => string) | string]> = [
+		// Objects
+		[/^\/v2\/objects$/, () => method === 'GET' ? 'List Objects' : 'Create Object'],
+		[/^\/v2\/objects\/\{object\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Object';
+				case 'PATCH': return 'Update Object';
+				case 'DELETE': return 'Delete Object';
+				default: return `${method} Object`;
+			}
+		}],
+
+		// Records
+		[/^\/v2\/objects\/\{object\}\/records\/query$/, () => 'List Records'],
+		[/^\/v2\/objects\/\{object\}\/records$/, () => {
+			switch (method) {
+				case 'POST': return 'Create Record';
+				case 'PUT': return 'Assert Record';
+				default: return `${method} Records`;
+			}
+		}],
+		[/^\/v2\/objects\/\{object\}\/records\/\{record_id\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Record';
+				case 'PUT': return 'Update Record (Overwrite)';
+				case 'PATCH': return 'Update Record (Append)';
+				case 'DELETE': return 'Delete Record';
+				default: return `${method} Record`;
+			}
+		}],
+		[/^\/v2\/objects\/\{object\}\/records\/\{record_id\}\/attributes$/, () => 'List Record Attributes'],
+		[/^\/v2\/objects\/\{object\}\/records\/\{record_id\}\/entries$/, () => 'List Record Entries'],
+
+		// Attributes
+		[/^\/v2\/\{target\}\/\{identifier\}\/attributes$/, () => method === 'GET' ? 'List Attributes' : 'Create Attribute'],
+		[/^\/v2\/\{target\}\/\{identifier\}\/attributes\/\{attribute\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Attribute';
+				case 'PATCH': return 'Update Attribute';
+				case 'DELETE': return 'Delete Attribute';
+				default: return `${method} Attribute`;
+			}
+		}],
+
+		// Lists
+		[/^\/v2\/lists$/, () => method === 'GET' ? 'List Lists' : 'Create List'],
+		[/^\/v2\/lists\/\{list\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get List';
+				case 'DELETE': return 'Delete List';
+				default: return `${method} List`;
+			}
+		}],
+
+		// Entries
+		[/^\/v2\/lists\/\{list\}\/entries\/query$/, () => 'List Entries'],
+		[/^\/v2\/lists\/\{list\}\/entries$/, () => 'Create Entry'],
+		[/^\/v2\/lists\/\{list\}\/entries\/\{entry_id\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Entry';
+				case 'PUT': return 'Update Entry (Overwrite)';
+				case 'PATCH': return 'Update Entry (Append)';
+				case 'DELETE': return 'Delete Entry';
+				default: return `${method} Entry`;
+			}
+		}],
+		[/^\/v2\/lists\/\{list\}\/entries\/\{entry_id\}\/attributes$/, () => 'List Entry Attributes'],
+
+		// Workspace members
+		[/^\/v2\/workspace_members$/, () => 'List Workspace Members'],
+		[/^\/v2\/workspace_members\/\{workspace_member_id\}$/, () => 'Get Workspace Member'],
+
+		// Notes
+		[/^\/v2\/notes$/, () => method === 'GET' ? 'List Notes' : 'Create Note'],
+		[/^\/v2\/notes\/\{note_id\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Note';
+				case 'DELETE': return 'Delete Note';
+				default: return `${method} Note`;
+			}
+		}],
+
+		// Tasks
+		[/^\/v2\/tasks$/, () => method === 'GET' ? 'List Tasks' : 'Create Task'],
+		[/^\/v2\/tasks\/\{task_id\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Task';
+				case 'PATCH': return 'Update Task';
+				case 'DELETE': return 'Delete Task';
+				default: return `${method} Task`;
+			}
+		}],
+
+		// Comments
+		[/^\/v2\/threads\/\{thread_id\}\/comments$/, () => method === 'GET' ? 'List Comments' : 'Create Comment'],
+		[/^\/v2\/comments\/\{comment_id\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Comment';
+				case 'DELETE': return 'Delete Comment';
+				default: return `${method} Comment`;
+			}
+		}],
+
+		// Webhooks
+		[/^\/v2\/webhooks$/, () => method === 'GET' ? 'List Webhooks' : 'Create Webhook'],
+		[/^\/v2\/webhooks\/\{webhook_id\}$/, () => {
+			switch (method) {
+				case 'GET': return 'Get Webhook';
+				case 'PATCH': return 'Update Webhook';
+				case 'DELETE': return 'Delete Webhook';
+				default: return `${method} Webhook`;
+			}
+		}],
+
+		// Self
+		[/^\/v2\/self$/, () => 'Get Current User'],
+	];
+
+	// Find matching pattern
+	for (const [pattern, getName] of patterns) {
+		if (pattern.test(path)) {
+			return typeof getName === 'function' ? getName() : getName;
+		}
 	}
+
+	// Fallback: just use the method and a cleaned path
+	return `${method} ${path.replace(/^\/v2\//, '').replace(/[{}]/g, '')}`;
+}
+
+// Transform operation names and fix displayOptions
+const operationMapping: { [key: string]: string } = {};
+const friendlyNameMapping: { [key: string]: string } = {};
+
+// First pass: Transform operation names to be user-friendly
+const transformedProperties = properties.map((prop: any) => {
+	if (prop.name === 'operation' && prop.options) {
+		// Transform each operation option
+		const transformedOptions = prop.options.map((opt: any) => {
+			const friendlyName = makeOperationNameFriendly(opt.name);
+			operationMapping[opt.name] = opt.value;
+			friendlyNameMapping[opt.value] = friendlyName;
+
+			return {
+				...opt,
+				name: friendlyName,
+				// Keep original name for reference if needed
+				originalName: opt.name,
+			};
+		});
+
+		return {
+			...prop,
+			options: transformedOptions,
+		};
+	}
+	return prop;
 });
 
-// Fix displayOptions in all properties to use operation values instead of names
-const fixedProperties = properties.map((prop: any) => {
+// Second pass: Fix displayOptions to use operation values instead of names
+const fixedProperties = transformedProperties.map((prop: any) => {
 	if (prop.displayOptions?.show?.operation) {
 		return {
 			...prop,
@@ -54,7 +209,7 @@ export class Attio implements INodeType {
 		icon: 'file:attio.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+		subtitle: '={{$parameter["resource"]}}',
 		description: 'Interact with Attio API',
 		defaults: {
 			name: 'Attio',
@@ -82,7 +237,7 @@ export class Attio implements INodeType {
 		const credentials = await this.getCredentials('attioApi');
 
 		for (let i = 0; i < items.length; i++) {
-			try {
+						try {
 				const resource = this.getNodeParameter('resource', i) as string;
 				const operation = this.getNodeParameter('operation', i) as string;
 
