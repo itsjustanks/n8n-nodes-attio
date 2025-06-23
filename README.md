@@ -33,6 +33,22 @@ To use this node, you'll need an Attio API access token:
 3. Create a new API token
 4. Copy the token and add it to the Attio credentials in n8n
 
+## AI Agent Tool Compatibility
+
+This node can be used as a tool in n8n's AI Agent workflows. To enable this functionality:
+
+1. Set the environment variable when running n8n:
+   ```bash
+   N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+   ```
+
+2. In your AI Agent workflow:
+   - Add an AI Agent node (e.g., OpenAI Functions Agent)
+   - Add the Attio node
+   - Connect the Attio node to the AI Agent as a tool
+
+The AI agent will be able to use Attio operations to search, create, and update CRM data based on natural language instructions.
+
 ## MCP (Model Context Protocol) Integration
 
 This node is compatible with n8n's MCP Server, allowing AI agents and MCP clients to interact with Attio CRM:

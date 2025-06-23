@@ -229,6 +229,7 @@ export class Attio implements INodeType {
 			},
 		},
 		properties: fixedProperties, // Use the fixed properties
+		usableAsTool: true,
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {

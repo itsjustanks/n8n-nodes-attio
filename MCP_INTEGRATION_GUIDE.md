@@ -18,16 +18,23 @@ Model Context Protocol (MCP) is an open protocol by Anthropic that enables AI mo
 
 ## Setup Methods
 
-### Method 1: Using Attio as an AI Agent Tool
+### Method 1: Using Attio as an AI Agent Tool (Direct Integration)
 
-1. **Create an AI Agent workflow**:
+**Note**: As of version 0.5.0, the Attio node supports direct AI Agent integration!
+
+1. **Prerequisites**:
+   - Ensure `N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true` is set
+   - n8n-nodes-attio version 0.5.0 or higher
+
+2. **Create an AI Agent workflow**:
    - Add an AI Agent node (e.g., OpenAI Functions Agent)
-   - Add your Attio node as a tool
-   - The AI agent can now use Attio operations
+   - Add your Attio node
+   - Connect the Attio node to the AI Agent as a tool
+   - The AI agent can now use Attio operations directly
 
-2. **Example workflow**:
+3. **Example workflow**:
    ```
-   Manual Trigger → AI Agent → Attio Node
+   Manual Trigger → AI Agent (with Attio as tool)
    ```
 
 ### Method 2: MCP Server with Custom Workflow Tools

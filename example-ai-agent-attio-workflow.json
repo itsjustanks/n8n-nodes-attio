@@ -1,0 +1,74 @@
+{
+  "name": "AI Agent with Attio CRM",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "agentType": "openAiFunctionsAgent",
+        "model": "gpt-4-turbo-preview",
+        "systemMessage": "You are a helpful CRM assistant that can search, create, and update records in Attio CRM. When asked about people, companies, or any CRM data, use the Attio tool to interact with the CRM system.",
+        "text": "={{ $json.query }}"
+      },
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "type": "n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "resource": "Records",
+        "operation": "POST /v2/objects/{object}/records/query"
+      },
+      "id": "attio-tool",
+      "name": "Attio",
+      "type": "n8n-nodes-attio.attio",
+      "typeVersion": 1,
+      "position": [450, 150],
+      "credentials": {
+        "attioApi": {
+          "id": "attio-creds",
+          "name": "Attio API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "query",
+              "value": "Find all people in our CRM named John"
+            }
+          ]
+        }
+      },
+      "id": "set-query",
+      "name": "Set Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [250, 150]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{"node": "Set Query", "type": "main", "index": 0}]]
+    },
+    "Set Query": {
+      "main": [[{"node": "AI Agent", "type": "main", "index": 0}]]
+    },
+    "Attio": {
+      "ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
