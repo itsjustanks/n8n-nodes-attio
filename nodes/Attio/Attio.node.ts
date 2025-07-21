@@ -243,7 +243,7 @@ export class Attio implements INodeType {
 				const operation = this.getNodeParameter('operation', i) as string;
 
 				// Find the operation configuration
-				const operationProperty: any = properties.find(
+				const operationProperty: any = fixedProperties.find(
 					(prop: any) => prop.name === 'operation' &&
 					prop.displayOptions?.show?.resource?.[0] === resource &&
 					prop.options?.find((opt: any) => opt.value === operation)
@@ -279,7 +279,7 @@ export class Attio implements INodeType {
 				};
 
 				// Process parameters based on their routing configuration
-				const allProperties = properties.filter((prop: any) => {
+				const allProperties = fixedProperties.filter((prop: any) => {
 					return prop.displayOptions?.show?.operation?.[0] === operation &&
 						prop.displayOptions?.show?.resource?.[0] === resource;
 				});
